@@ -48,7 +48,12 @@ PROJECT_STATE_KEY = "project_shared_memory"
 async def get_project_state(ctx: WorkflowContext) -> ProjectState:
     """Load the shared state, falling back to an empty ledger."""
 
-    raw_state = await ctx.get_shared_state(PROJECT_STATE_KEY)
+    try:
+        raw_state = await ctx.get_shared_state(PROJECT_STATE_KEY)
+    except KeyError:
+        state = ProjectState()
+        await ctx.set_shared_state(PROJECT_STATE_KEY, state.model_dump())
+        return state
     if not raw_state:
         return ProjectState()
     if isinstance(raw_state, ProjectState):

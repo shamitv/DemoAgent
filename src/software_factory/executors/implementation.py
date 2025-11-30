@@ -16,13 +16,13 @@ class ImplementationExecutor(Executor):
 		self.role = role
 		friendly_id = id or f"implementation_{role}"
 		instructions = self._instructions_for_role(role)
-		agent = ChatAgent(
+		self.agent = ChatAgent(
 			chat_client,
 			instructions=instructions,
 			temperature=0.3,
 			top_p=0.9,
 		)
-		super().__init__(id=friendly_id, agent=agent)
+		super().__init__(id=friendly_id)
 
 	@handler
 	async def handle(self, message: Dict[str, Any], ctx: WorkflowContext) -> None:

@@ -1,0 +1,43 @@
+# Python cache and build artifacts
+__pycache__/
+*.py[cod]
+*.so
+*.dylib
+*.dll
+build/
+dist/
+.eggs/
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment files
+.env
+.env.*
+
+# Test / coverage outputs
+.pytest_cache/
+.coverage
+*.cover
+coverage.xml
+
+# macOS Finder metadata
+.DS_Store
+
+# IDE settings
+.idea/
+.vscode/
+
+# PyCharm specific
+*.iml
+out/
+
+# VS Code settings
+*.code-workspace
+
+# Miscellaneous
+moccon/

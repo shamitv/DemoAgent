@@ -1,13 +1,28 @@
 """Planning executor implementation."""
 
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Literal
 
 from agent_framework import ChatAgent, Executor, handler
 from agent_framework._workflows._workflow_context import WorkflowContext
+from pydantic import BaseModel
 
 from ..signals import PLAN_CREATED
 from ..state import ProjectState, Task, get_project_state, update_project_state
+
+
+class PlannerTaskPayload(BaseModel):
+    """Structured schema returned by the planner LLM."""
+
+    title: str
+    description: str
+    assignee: Literal["coder", "researcher"]
+
+
+class PlannerResponsePayload(BaseModel):
+    """Top-level payload that wraps the generated tasks."""
+
+    tasks: List[PlannerTaskPayload]
 
 
 class PlanningExecutor(Executor):
@@ -19,34 +34,13 @@ class PlanningExecutor(Executor):
             "ordered list of tasks. Each task must include: title, description, assignee "
             "(coder or researcher), and risks. NEVER return commentary outside JSON."
         )
-        response_format = {
-            "type": "json_object",
-            "schema": {
-                "type": "object",
-                "properties": {
-                    "tasks": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "title": {"type": "string"},
-                                "description": {"type": "string"},
-                                "assignee": {"enum": ["coder", "researcher"]},
-                            },
-                            "required": ["title", "description", "assignee"],
-                        },
-                    }
-                },
-                "required": ["tasks"],
-            },
-        }
-        agent = ChatAgent(
+        self.agent = ChatAgent(
             chat_client,
             instructions=plan_instructions,
-            response_format=response_format,
+            response_format=PlannerResponsePayload,
             temperature=0.2,
         )
-        super().__init__(id=id, agent=agent)
+        super().__init__(id=id)
 
     @handler
     async def handle(self, message: Any, ctx: WorkflowContext) -> None:
@@ -57,8 +51,7 @@ class PlanningExecutor(Executor):
 
         prompt = self._build_prompt(user_request, state)
         response = await self.agent.run(prompt)
-        plan_text = _response_to_text(response)
-        tasks = self._parse_tasks(plan_text)
+        tasks = self._parse_tasks(response)
         if not tasks:
             raise ValueError("Planner returned no tasks; ensure instructions are correct.")
 
@@ -76,8 +69,15 @@ class PlanningExecutor(Executor):
             f" Existing tasks (if any): {historical}"
         )
 
-    def _parse_tasks(self, plan_text: str) -> List[Task]:
-        data = json.loads(plan_text)
+    def _parse_tasks(self, response: Any) -> List[Task]:
+        payload = getattr(response, "value", None)
+        if isinstance(payload, PlannerResponsePayload):
+            data = payload.model_dump()
+        elif isinstance(payload, dict):
+            data = payload
+        else:
+            plan_text = _response_to_text(response)
+            data = json.loads(plan_text)
         raw_tasks = data.get("tasks", [])
         return [Task(**task) for task in raw_tasks]
 

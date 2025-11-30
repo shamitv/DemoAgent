@@ -22,7 +22,7 @@ def build_workflow(chat_client) -> Any:
 	researcher = ImplementationExecutor(chat_client, role="researcher")
 	verifier = VerificationExecutor(chat_client)
 
-	builder = WorkflowBuilder(name="software_factory")
+	builder = WorkflowBuilder()
 	builder.set_start_executor(planner)
 	builder.add_edge(planner, dispatcher)
 	builder.add_edge(dispatcher, coder, condition=_assignee_condition("coder"))

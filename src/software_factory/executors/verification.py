@@ -1,13 +1,21 @@
 """Verification executor implementing the Reflexion loop."""
 
 import json
-from typing import Any, Dict
+from typing import Any, Dict, Literal
 
 from agent_framework import ChatAgent, Executor, handler
 from agent_framework._workflows._workflow_context import WorkflowContext
+from pydantic import BaseModel
 
 from ..signals import ADVANCE_TASK, REQUEST_VERIFICATION
 from ..state import ProjectState, Task, get_project_state, update_project_state
+
+
+class VerificationResult(BaseModel):
+	"""Structured verifier output enforced by the API."""
+
+	verdict: Literal["pass", "fail"]
+	feedback: str
 
 
 class VerificationExecutor(Executor):
@@ -19,24 +27,13 @@ class VerificationExecutor(Executor):
 			" against the task description. Reply in JSON with fields 'verdict'"
 			" (pass/fail) and 'feedback'."
 		)
-		response_format = {
-			"type": "json_object",
-			"schema": {
-				"type": "object",
-				"properties": {
-					"verdict": {"enum": ["pass", "fail"]},
-					"feedback": {"type": "string"},
-				},
-				"required": ["verdict", "feedback"],
-			},
-		}
-		agent = ChatAgent(
+		self.agent = ChatAgent(
 			chat_client,
 			instructions=instructions,
 			temperature=0,
-			response_format=response_format,
+			response_format=VerificationResult,
 		)
-		super().__init__(id=id, agent=agent)
+		super().__init__(id=id)
 
 	@handler
 	async def handle(self, message: Dict[str, Any], ctx: WorkflowContext) -> None:
@@ -79,10 +76,15 @@ class VerificationExecutor(Executor):
 		)
 
 	def _parse_verdict(self, response: Any) -> tuple[str, str]:
+		payload = getattr(response, "value", None)
+		if isinstance(payload, VerificationResult):
+			return payload.verdict, payload.feedback
+		if isinstance(payload, dict):
+			return payload.get("verdict", "fail"), payload.get("feedback", "")
 		text = _response_to_text(response)
 		try:
-			payload = json.loads(text)
-			return payload.get("verdict", "fail"), payload.get("feedback", "")
+			decoded = json.loads(text)
+			return decoded.get("verdict", "fail"), decoded.get("feedback", "")
 		except json.JSONDecodeError:
 			normalized = text.lower()
 			verdict = "pass" if "pass" in normalized and "fail" not in normalized else "fail"
