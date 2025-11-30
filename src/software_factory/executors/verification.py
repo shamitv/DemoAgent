@@ -7,6 +7,7 @@ from agent_framework import ChatAgent, Executor, handler
 from agent_framework._workflows._workflow_context import WorkflowContext
 from pydantic import BaseModel
 
+from ..client import ModelConfig, apply_model_config
 from ..signals import ADVANCE_TASK, REQUEST_VERIFICATION
 from ..state import ProjectState, Task, get_project_state, update_project_state
 
@@ -21,17 +22,18 @@ class VerificationResult(BaseModel):
 class VerificationExecutor(Executor):
 	"""Critic agent that approves or rejects implementation outputs."""
 
-	def __init__(self, chat_client, *, id: str = "verifier"):
+	def __init__(self, chat_client, *, id: str = "verifier", model_config: ModelConfig | None = None):
 		instructions = (
 			"You are a meticulous reviewer. Evaluate the provided implementation output"
 			" against the task description. Reply in JSON with fields 'verdict'"
 			" (pass/fail) and 'feedback'."
 		)
+		chat_kwargs = apply_model_config(model_config, {"temperature": 0})
 		self.agent = ChatAgent(
 			chat_client,
 			instructions=instructions,
-			temperature=0,
 			response_format=VerificationResult,
+			**chat_kwargs,
 		)
 		super().__init__(id=id)
 

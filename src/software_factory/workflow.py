@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict
 
 from agent_framework import WorkflowBuilder
 
+from .client import ModelConfig
 from .executors.dispatcher import DispatcherExecutor
 from .executors.implementation import ImplementationExecutor
 from .executors.planning import PlanningExecutor
@@ -13,14 +14,14 @@ from .executors.verification import VerificationExecutor
 from .signals import DISPATCH_TASK, REQUEST_VERIFICATION
 
 
-def build_workflow(chat_client) -> Any:
+def build_workflow(chat_client, model_config: ModelConfig | None = None) -> Any:
 	"""Construct the Planner -> Dispatcher -> Implementers -> Verifier workflow."""
 
-	planner = PlanningExecutor(chat_client)
+	planner = PlanningExecutor(chat_client, model_config=model_config)
 	dispatcher = DispatcherExecutor()
-	coder = ImplementationExecutor(chat_client, role="coder")
-	researcher = ImplementationExecutor(chat_client, role="researcher")
-	verifier = VerificationExecutor(chat_client)
+	coder = ImplementationExecutor(chat_client, role="coder", model_config=model_config)
+	researcher = ImplementationExecutor(chat_client, role="researcher", model_config=model_config)
+	verifier = VerificationExecutor(chat_client, model_config=model_config)
 
 	builder = WorkflowBuilder()
 	builder.set_start_executor(planner)

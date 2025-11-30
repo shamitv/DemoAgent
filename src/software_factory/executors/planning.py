@@ -7,6 +7,7 @@ from agent_framework import ChatAgent, Executor, handler
 from agent_framework._workflows._workflow_context import WorkflowContext
 from pydantic import BaseModel
 
+from ..client import ModelConfig, apply_model_config
 from ..signals import PLAN_CREATED
 from ..state import ProjectState, Task, get_project_state, update_project_state
 
@@ -28,17 +29,25 @@ class PlannerResponsePayload(BaseModel):
 class PlanningExecutor(Executor):
     """Uses an LLM to build a structured project plan."""
 
-    def __init__(self, chat_client, *, instructions: str | None = None, id: str = "planner"):
+    def __init__(
+        self,
+        chat_client,
+        *,
+        instructions: str | None = None,
+        id: str = "planner",
+        model_config: ModelConfig | None = None,
+    ):
         plan_instructions = instructions or (
             "You are a senior planning agent. Break software factory requests into a minimal "
             "ordered list of tasks. Each task must include: title, description, assignee "
             "(coder or researcher), and risks. NEVER return commentary outside JSON."
         )
+        chat_kwargs = apply_model_config(model_config, {"temperature": 0.2})
         self.agent = ChatAgent(
             chat_client,
             instructions=plan_instructions,
             response_format=PlannerResponsePayload,
-            temperature=0.2,
+            **chat_kwargs,
         )
         super().__init__(id=id)
 

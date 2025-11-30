@@ -9,6 +9,9 @@ This repository is a demo of the Microsoft Agent Framework that implements the P
 3. **Environment Variables**:
    - `OPENAI_API_KEY`: Standard OpenAI API key.
    - `OPENAI_MODEL`: Optional override for the default `gpt-4o` model ID.
+  - Model-specific tuning locks live in `software_factory.client.MODEL_CONFIGS`.
+    Call `get_model_config(..., overrides={...})` before `build_workflow` if you need to
+    force/allow parameters (e.g., disabling `temperature` for `gpt-5-mini`).
 
 ## Usage
 

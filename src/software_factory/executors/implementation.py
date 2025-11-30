@@ -5,6 +5,7 @@ from typing import Any, Dict
 from agent_framework import ChatAgent, Executor, handler
 from agent_framework._workflows._workflow_context import WorkflowContext
 
+from ..client import ModelConfig, apply_model_config
 from ..signals import ADVANCE_TASK, DISPATCH_TASK
 from ..state import ProjectState, Task, get_project_state, update_project_state
 
@@ -12,15 +13,22 @@ from ..state import ProjectState, Task, get_project_state, update_project_state
 class ImplementationExecutor(Executor):
 	"""Specialized executor (coder or researcher) that performs a plan task."""
 
-	def __init__(self, chat_client, role: str, *, id: str | None = None):
+	def __init__(
+		self,
+		chat_client,
+		role: str,
+		*,
+		id: str | None = None,
+		model_config: ModelConfig | None = None,
+	):
 		self.role = role
 		friendly_id = id or f"implementation_{role}"
 		instructions = self._instructions_for_role(role)
+		chat_kwargs = apply_model_config(model_config, {"temperature": 0.3, "top_p": 0.9})
 		self.agent = ChatAgent(
 			chat_client,
 			instructions=instructions,
-			temperature=0.3,
-			top_p=0.9,
+			**chat_kwargs,
 		)
 		super().__init__(id=friendly_id)
 

@@ -17,7 +17,7 @@ from agent_framework._workflows._events import (
 )
 
 from . import build_workflow, get_chat_client
-from .client import MissingAPIKeyError
+from .client import MissingAPIKeyError, get_model_config
 
 
 def _load_env_file(env_path: Path) -> None:
@@ -70,8 +70,9 @@ def _parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
 
 
 async def _run_workflow(prompt: str, model: Optional[str], debug: bool) -> str:
+    model_config = get_model_config(model)
     chat_client = get_chat_client(model)
-    workflow = build_workflow(chat_client)
+    workflow = build_workflow(chat_client, model_config=model_config)
 
     final_output: str = ""
     async for event in workflow.run_stream(prompt):
