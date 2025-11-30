@@ -1,6 +1,6 @@
 # Microsoft Agent Framework Software Factory
 
-This repository implements the Planner -> Dispatcher -> Implementation -> Verification workflow described in `docs/agent_plan.md`. It targets the Microsoft Agent Framework using OpenAI models, following the "software factory" architecture that combines typed shared state, deterministic routing, and iterative verification loops.
+This repository is a demo of the Microsoft Agent Framework that implements the Planner -> Dispatcher -> Implementation -> Verification workflow described in `docs/agent_plan.md`. It targets the Microsoft Agent Framework using OpenAI models, following the "software factory" architecture that combines typed shared state, deterministic routing, and iterative verification loops.
 
 ## Getting Started
 
