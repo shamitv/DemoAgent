@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent_software_factory"
+version = "0.1.0"
+description = "Planner/Implementer/Verifier workflow using the Microsoft Agent Framework"
+authors = [{ name = "Software Factory" }]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "agent-framework",
+    "openai>=1.0.0",
+    "pydantic>=2.7.0",
+    "pytest>=8.2.0",
+]
+
+[project.optional-dependencies]
+dev = ["ruff>=0.5.0"]
+
+[project.scripts]
+software-factory = "software_factory.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

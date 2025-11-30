@@ -1,0 +1,2 @@
+[console_scripts]
+software-factory = software_factory.cli:main
